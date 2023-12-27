@@ -33,12 +33,39 @@ const UserController = {
 
 			await newUser.save();
 
-			res.send({ "status": "success", "message": "Registered successfully" });
+			res.status(201).send({ "status": "success", "message": "Registered successfully" });
 		} catch (error) {
 			console.error("Error during user registration:", error);
 			res.send({ "status": "failed", "message": "Unable to register" });
 		}
-	}
+	},
+	
+	userLogin: async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ status: 'failed', message: 'All fields are required' });
+      }
+
+      const user = await UserModel.findOne({ email });
+
+      if (!user) {
+        return res.status(400).json({ status: 'failed', message: 'Not registered user, please register' });
+      }
+
+      const isMatch = await bcrypt.compare(password, user.password);
+
+      if (isMatch) {
+        res.json({ status: 'success', message: 'Login success' });
+      } else {
+        res.status(400).json({ status: 'failed', message: 'Email or password is incorrect' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ status: 'failed', message: 'Unable to login' });
+    }
+  },
 };
 
 export default UserController;
