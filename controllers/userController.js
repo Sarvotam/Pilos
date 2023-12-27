@@ -1,29 +1,44 @@
-import UserModel from "../models/User";
+import UserModel from "../models/User.js";
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
-Class UserController{
-    static userRegistration = async (req, res) => {
-        const {name, email, password, password_confirmation, tc} = req.body // in future the data will be sent from frontend react
-        const user = await UserModel.findOne({email:email})
-        if(user){
-            res.send({"status":"failed", "message":"Email already exist"})
-        }else{
-            if(name && email && password %% password_confirmation && tc){
-                 if(password === password_confirmation){
-                    const new_user = new UserModel({
-                        name:name,
-                        email:email,
-                        password: password,
-                        tc:tc
-                    })
-                    await new_user.save()
-                 }else{
-                    res.send({"status":"failed", "message":"Confirmation password doesnot match"})
-                 }
-            }else{
-            res.send({"status":"failed", "message":"All field are required"})
-            }
-        }
-    }
-}
+const UserController = {
+	userRegistration: async (req, res) => {
+		try {
+			const { name, email, password, password_confirmation, tc } = req.body; // in future the data will be sent from frontend react
+			
+			if (!name || !email || !password || !password_confirmation || !tc) {
+					return res.send({ "status": "failed", "message": "All fields are required" });
+			}
+
+			const existingUser = await UserModel.findOne({ email });
+
+			if (existingUser) {
+					return res.send({ "status": "failed", "message": "Email already exists" });
+			}
+
+			if (password !== password_confirmation) {
+					return res.send({ "status": "failed", "message": "Confirmation password does not match" });
+			}
+
+			const salt = await bcrypt.genSalt(10);
+			const hashPassword = await bcrypt.hash(password, salt);
+
+			const newUser = new UserModel({
+					name,
+					email,
+					password: hashPassword,
+					tc
+			});
+
+			await newUser.save();
+
+			res.send({ "status": "success", "message": "Registered successfully" });
+		} catch (error) {
+			console.error("Error during user registration:", error);
+			res.send({ "status": "failed", "message": "Unable to register" });
+		}
+	}
+};
+
+export default UserController;
