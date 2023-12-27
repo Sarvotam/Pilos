@@ -32,8 +32,15 @@ const UserController = {
 			});
 
 			await newUser.save();
+			const saved_user = await UserModel.findOne({email:email})
+			// Generate JWT token
+			const token = jwt.sign(
+														{userID:saved_user._id},
+														process.env.JWT_SECRET_KEY, 
+														{ expiresIn: '5d'}
+														)
 
-			res.status(201).send({ "status": "success", "message": "Registered successfully" });
+			res.status(201).send({ "status": "success", "message": "Registered successfully", "token": token });
 		} catch (error) {
 			console.error("Error during user registration:", error);
 			res.send({ "status": "failed", "message": "Unable to register" });
@@ -57,7 +64,13 @@ const UserController = {
       const isMatch = await bcrypt.compare(password, user.password);
 
       if (isMatch) {
-        res.json({ status: 'success', message: 'Login success' });
+				// Generate JWT token
+				const token = jwt.sign(
+														{userID:user._id},
+														process.env.JWT_SECRET_KEY, 
+														{ expiresIn: '5d'}
+														)
+        res.json({ status: 'success', message: 'Login success', "token": token });
       } else {
         res.status(400).json({ status: 'failed', message: 'Email or password is incorrect' });
       }
