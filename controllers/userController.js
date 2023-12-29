@@ -96,6 +96,10 @@ const UserController = {
 			res.send({"status": "failed", "message": "all fields are required"})
 		}
 	},
+
+	loggedUser: async (req, res) => {
+		res.send({"user":req.user})
+	},
 };
 
 export default UserController;
