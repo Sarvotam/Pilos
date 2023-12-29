@@ -66,10 +66,10 @@ const UserController = {
       if (isMatch) {
 				// Generate JWT token
 				const token = jwt.sign(
-														{userID:user._id},
-														process.env.JWT_SECRET_KEY, 
-														{ expiresIn: '5d'}
-														)
+															{userID:user._id},
+															process.env.JWT_SECRET_KEY, 
+															{ expiresIn: '5d'}
+															)
         res.json({ status: 'success', message: 'Login success', "token": token });
       } else {
         res.status(400).json({ status: 'failed', message: 'Email or password is incorrect' });
@@ -79,6 +79,23 @@ const UserController = {
       res.status(500).json({ status: 'failed', message: 'Unable to login' });
     }
   },
+
+	changeUserPassword: async (req, res) => {
+		const {password, password_confirmation} = req.body
+		if(password && password_confirmation){
+			if(password !== password_confirmation){
+				res.send({"status": "failed", "message": "password doesnot match"})
+			}else{
+				const salt = await bcrypt.genSalt(10)
+				const newHashPassword = await bcrypt.hash(password, salt)
+				// console.log(req.user._id)
+				await UserModel.findByIdAndUpdate(req.user._id, {$set: {password: newHashPassword}}) // Update password if user logged in which is handeled my middleware
+				res.send({"status": "success", "message": "password changed successfully"})
+			}
+		}else{
+			res.send({"status": "failed", "message": "all fields are required"})
+		}
+	},
 };
 
 export default UserController;
